@@ -33,6 +33,9 @@ import wifiphisher.common.phishingpage as phishingpage
 import wifiphisher.common.recon as recon
 import wifiphisher.common.tui as tui
 import wifiphisher.common.victim as victim
+import wifiphisher.configuration as configuration
+import wifiphisher.core.runtime_context as runtime_context
+import wifiphisher.telemetry.logging as telemetry_logging
 
 from six.moves import range, input
 
@@ -225,24 +228,30 @@ def parse_args():
 
 
 VERSION = "1.4GIT"
-args = parse_args()
-APs = {}  # for listing APs
 
 
-def setup_logging(args):
+def setup_logging(args, session_id=None, runtime_config=None):
     """
     Setup the logging configurations
     """
     root_logger = logging.getLogger()
     # logging setup
     if args.logging:
-        if args.logpath:
-            LOGGING_CONFIG['handlers']['file']['filename'] = args.logpath
-        logging.config.dictConfig(LOGGING_CONFIG)
+        logging_settings = runtime_config.logging if runtime_config else None
+        logging_cfg = telemetry_logging.build_logging_config(
+            file_path=(logging_settings.file_path if logging_settings else args.logpath),
+            level=(logging_settings.level if logging_settings else None),
+            json_format=(logging_settings.json if logging_settings else False))
+        logging.config.dictConfig(logging_cfg)
+        if session_id:
+            session_filter = telemetry_logging.SessionContextFilter(session_id)
+            root_logger.addFilter(session_filter)
+            for handler in root_logger.handlers:
+                handler.addFilter(session_filter)
         should_roll_over = False
         # use root logger to rotate the log file
-        if os.path.getsize(LOGGING_CONFIG['handlers']['file']['filename']) > 0:
-            should_roll_over = os.path.isfile(LOGGING_CONFIG['handlers']['file']['filename'])
+        if os.path.getsize(logging_cfg['handlers']['file']['filename']) > 0:
+            should_roll_over = os.path.isfile(logging_cfg['handlers']['file']['filename'])
         should_roll_over and root_logger.handlers[0].doRollover()
         logger.info("Starting Wifiphisher")
 
@@ -328,6 +337,8 @@ def kill_interfering_procs():
 
 class WifiphisherEngine:
     def __init__(self):
+        self.runtime_context = runtime_context.RuntimeContext()
+        self.config = configuration.load_config()
         self.mac_matcher = macmatcher.MACMatcher(MAC_PREFIX_FILE)
         self.network_manager = interfaces.NetworkManager()
         self.template_manager = phishingpage.TemplateManager()
@@ -389,11 +400,16 @@ class WifiphisherEngine:
         set_channel_range()
 
         # Parse args
-        global args, APs
         args = parse_args()
+        self.runtime_context.set_cli_args(args)
+        self.config = configuration.load_config(
+            runtime_overrides={
+                "logging_enabled": args.logging,
+                "logging_file_path": args.logpath,
+            })
 
         # setup the logging configuration
-        setup_logging(args)
+        setup_logging(args, self.runtime_context.session_id, self.config)
 
         if args.phishing_pages_directory:
             # check if the path ends with the proper separator, if not add it
@@ -617,16 +633,17 @@ class WifiphisherEngine:
                      self.template_manager.template_directory + template.get_payload_path())
 
         APs_context = []
-        for i in APs:
+        discovered_aps = self.runtime_context.discovered_aps
+        for i in discovered_aps:
             APs_context.append({
                 'channel':
-                APs[i][0] or "",
+                discovered_aps[i][0] or "",
                 'essid':
-                APs[i][1] or "",
+                discovered_aps[i][1] or "",
                 'bssid':
-                APs[i][2] or "",
+                discovered_aps[i][2] or "",
                 'vendor':
-                self.mac_matcher.get_vendor_name(APs[i][2]) or ""
+                self.mac_matcher.get_vendor_name(discovered_aps[i][2]) or ""
             })
 
         template.merge_context({'APs': APs_context})
@@ -743,7 +760,7 @@ class WifiphisherEngine:
         self.mac_matcher.unbind()
 
         clients_APs = []
-        APs = []
+        self.runtime_context.reset_discovered_aps()
 
         # Main loop.
         try:

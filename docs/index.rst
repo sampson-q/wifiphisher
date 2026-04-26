@@ -85,6 +85,7 @@ This documentation is also available in `PDF and Epub formats
    extensions
    custom_phishing_scenario
    opmodes
+   modernization_phase1
    faq
 
 * :ref:`genindex`
@@ -93,4 +94,3 @@ This documentation is also available in `PDF and Epub formats
 
 This web site and all documentation is licensed under `Creative
 Commons 3.0 <http://creativecommons.org/licenses/by/3.0/>`_.
-
