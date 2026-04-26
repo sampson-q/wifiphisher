@@ -56,6 +56,13 @@ class TestRuntimeConfig(unittest.TestCase):
         with self.assertRaises(core_exceptions.ConfigurationError):
             config.load_config(runtime_overrides={"logging_level": "INVALID"})
 
+    def test_invalid_logging_directory_raises(self):
+        with self.assertRaises(core_exceptions.ConfigurationError):
+            config.load_config(
+                runtime_overrides={
+                    "logging_file_path": "/path/that/does/not/exist/wifiphisher.log"
+                })
+
 
 class TestTelemetryLogging(unittest.TestCase):
     """Test structured logging helpers."""
@@ -81,4 +88,3 @@ class TestTelemetryLogging(unittest.TestCase):
             exc_info=None)
         session_filter.filter(record)
         self.assertEqual(record.session_id, "session-123")
-

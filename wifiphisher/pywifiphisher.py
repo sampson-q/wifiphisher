@@ -237,13 +237,14 @@ def setup_logging(args, session_id=None, runtime_config=None):
     root_logger = logging.getLogger()
     # logging setup
     if args.logging:
-        log_file_path = args.logpath
-        log_level = None
-        json_format = False
         if runtime_config:
             log_file_path = runtime_config.logging.file_path
             log_level = runtime_config.logging.level
             json_format = runtime_config.logging.json
+        else:
+            log_file_path = args.logpath
+            log_level = None
+            json_format = False
         logging_cfg = telemetry_logging.build_logging_config(
             file_path=log_file_path,
             level=log_level,
