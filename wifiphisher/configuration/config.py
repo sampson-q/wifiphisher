@@ -68,7 +68,9 @@ def _validate(config):
     if not config.logging.file_path:
         raise ConfigurationError("Logging file path must not be empty.")
     log_dir = os.path.dirname(config.logging.file_path)
-    if log_dir and not os.path.isdir(log_dir):
+    if not log_dir:
+        log_dir = os.getcwd()
+    if not os.path.isdir(log_dir):
         raise ConfigurationError(
             "Logging directory does not exist: {}".format(log_dir))
 
