@@ -238,10 +238,17 @@ def setup_logging(args, session_id=None, runtime_config=None):
     # logging setup
     if args.logging:
         logging_settings = runtime_config.logging if runtime_config else None
+        log_file_path = args.logpath
+        log_level = None
+        json_format = False
+        if logging_settings:
+            log_file_path = logging_settings.file_path
+            log_level = logging_settings.level
+            json_format = logging_settings.json
         logging_cfg = telemetry_logging.build_logging_config(
-            file_path=(logging_settings.file_path if logging_settings else args.logpath),
-            level=(logging_settings.level if logging_settings else None),
-            json_format=(logging_settings.json if logging_settings else False))
+            file_path=log_file_path,
+            level=log_level,
+            json_format=json_format)
         logging.config.dictConfig(logging_cfg)
         if session_id:
             session_filter = telemetry_logging.SessionContextFilter(session_id)
@@ -338,7 +345,7 @@ def kill_interfering_procs():
 class WifiphisherEngine:
     def __init__(self):
         self.runtime_context = runtime_context.RuntimeContext()
-        self.config = configuration.load_config()
+        self.config = None
         self.mac_matcher = macmatcher.MACMatcher(MAC_PREFIX_FILE)
         self.network_manager = interfaces.NetworkManager()
         self.template_manager = phishingpage.TemplateManager()
