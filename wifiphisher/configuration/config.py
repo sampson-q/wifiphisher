@@ -11,7 +11,7 @@ from wifiphisher.core.exceptions import ConfigurationError
 class LoggingConfig:
     """Logging settings for a runtime session."""
 
-    enabled: bool = False
+    is_enabled: bool = False
     level: str = constants.LOG_LEVEL
     file_path: str = constants.LOG_FILEPATH
     json: bool = False
@@ -54,7 +54,7 @@ def _apply_overrides(config, env_layer, runtime_overrides):
         if runtime_overrides.get("logging_json") is not None:
             config.logging.json = _to_bool(runtime_overrides["logging_json"])
         if runtime_overrides.get("logging_enabled") is not None:
-            config.logging.enabled = _to_bool(runtime_overrides["logging_enabled"])
+            config.logging.is_enabled = _to_bool(runtime_overrides["logging_enabled"])
 
 
 def _validate(config):
@@ -76,4 +76,3 @@ def load_config(runtime_overrides=None):
     _apply_overrides(config, env_layer, runtime_overrides or {})
     _validate(config)
     return config
-

@@ -46,7 +46,5 @@ def build_logging_config(file_path=None, level=None, json_format=False):
         }
         logging_config["handlers"]["file"]["formatter"] = "json"
     else:
-        logging_config["formatters"]["detailed"][
-            "format"
-        ] = "%(asctime)s - %(name)32s - %(levelname)s - [session_id=%(session_id)s] %(message)s"
+        logging_config["formatters"]["detailed"]["format"] = "%(asctime)s - %(name)32s - %(levelname)s - [session_id=%(session_id)s] %(message)s"
     return logging_config
