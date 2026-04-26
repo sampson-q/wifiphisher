@@ -257,6 +257,7 @@ def setup_logging(args, session_id=None, runtime_config=None):
                 handler.addFilter(session_filter)
         # use root logger to rotate the log file
         log_filename = logging_cfg['handlers']['file']['filename']
+        # Short-circuit prevents getsize from being called for missing files.
         should_roll_over = (
             os.path.isfile(log_filename) and os.path.getsize(log_filename) > 0)
         should_roll_over and root_logger.handlers[0].doRollover()
