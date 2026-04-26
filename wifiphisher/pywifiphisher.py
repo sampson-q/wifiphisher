@@ -257,8 +257,9 @@ def setup_logging(args, session_id=None, runtime_config=None):
                 handler.addFilter(session_filter)
         should_roll_over = False
         # use root logger to rotate the log file
-        if os.path.getsize(logging_cfg['handlers']['file']['filename']) > 0:
-            should_roll_over = os.path.isfile(logging_cfg['handlers']['file']['filename'])
+        if os.path.isfile(logging_cfg['handlers']['file']['filename']) and \
+                os.path.getsize(logging_cfg['handlers']['file']['filename']) > 0:
+            should_roll_over = True
         should_roll_over and root_logger.handlers[0].doRollover()
         logger.info("Starting Wifiphisher")
 
